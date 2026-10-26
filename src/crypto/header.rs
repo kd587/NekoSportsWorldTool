@@ -344,4 +344,61 @@ mod tests {
         };
         assert!(!configured.has_unconfigured_default_location());
     }
+
+    #[test]
+    fn dalian_city_with_a_configured_anchor_is_accepted() {
+        for city in ["大连市", " 大连市 "] {
+            let identity = HeaderIdentity {
+                city: city.into(),
+                anchor_lat: 38.9140,
+                anchor_lon: 121.6147,
+                ..Default::default()
+            };
+            assert!(!identity.has_unconfigured_default_location(), "city={city}");
+        }
+    }
+
+    #[test]
+    fn changing_only_the_city_does_not_accept_the_sample_anchor() {
+        let identity = HeaderIdentity {
+            city: "北京市".into(),
+            ..Default::default()
+        };
+        assert!(identity.has_unconfigured_default_location());
+    }
+
+    #[test]
+    fn blank_city_is_rejected_even_with_a_configured_anchor() {
+        for city in ["", " \t\n"] {
+            let identity = HeaderIdentity {
+                city: city.into(),
+                anchor_lat: 38.9140,
+                anchor_lon: 121.6147,
+                ..Default::default()
+            };
+            assert!(identity.has_unconfigured_default_location());
+        }
+    }
+
+    #[test]
+    fn invalid_anchors_are_rejected_even_with_a_nonempty_city() {
+        for (anchor_lat, anchor_lon) in [
+            (f64::NAN, 121.6147),
+            (38.9140, f64::NAN),
+            (f64::INFINITY, 121.6147),
+            (38.9140, f64::NEG_INFINITY),
+            (90.1, 121.6147),
+            (-90.1, 121.6147),
+            (38.9140, 180.1),
+            (38.9140, -180.1),
+        ] {
+            let identity = HeaderIdentity {
+                city: "北京市".into(),
+                anchor_lat,
+                anchor_lon,
+                ..Default::default()
+            };
+            assert!(identity.has_unconfigured_default_location());
+        }
+    }
 }
