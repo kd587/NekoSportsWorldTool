@@ -399,6 +399,36 @@ const LOCAL_OSM: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 <tag k="highway" v="footway"/></way></osm>"#;
 
 #[test]
+fn bundled_stadium_button_loads_offline_and_persists_explicit_selection() {
+    for (w, h) in [(360., 600.), (1100., 900.)] {
+        let root = std::env::temp_dir().join(format!("stadium-ui-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&root).unwrap();
+        crate::platform::TEST_DATA_DIR.with(|p| *p.borrow_mut() = Some(root.clone()));
+        let ctx = egui::Context::default();
+        let mut app = App::from_state(
+            &ctx, HeaderIdentity::default(), Session::default(), Config::default(),
+        );
+        app.tab = 7;
+        assert!(app.session.is_none());
+        assert!(app.config.osm_path.is_empty(), "supplement must not auto-select itself");
+        let at = scroll_to_label(&mut app, &ctx, w, h, "加载大连东软田径场补充地图");
+        click(&mut app, &ctx, w, h, at);
+        let loaded = app.net_rx.recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+        assert!(loaded.result.is_ok());
+        app.net_tx.send(loaded).unwrap();
+        app.poll_messages();
+        assert_eq!(app.network.as_ref().unwrap().graph.node_count(), 174);
+        assert!(std::path::Path::new(&app.config.osm_path).is_file());
+        assert_eq!(app.config.route_mode, "road");
+        assert_eq!(crate::api::model::load_config().osm_path, app.config.osm_path);
+        assert!(!app.run_busy, "loading a supplement must not submit a run");
+        assert!(app.session.is_none());
+        crate::platform::TEST_DATA_DIR.with(|p| *p.borrow_mut() = None);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[test]
 fn manual_osm_button_loads_without_login_and_draws_roads_with_visible_status() {
     for (w, h) in [(320., 420.), (360., 480.), (412., 600.), (1100., 800.)] {
         let root = std::env::temp_dir().join(format!("osm-ui-{}", uuid::Uuid::new_v4()));

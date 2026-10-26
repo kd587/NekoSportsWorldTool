@@ -7,6 +7,34 @@ const MAX_BYTES: u64 = 24 * 1024 * 1024;
 const TTL_MS: i64 = 7 * 24 * 60 * 60 * 1000;
 const ENDPOINT: &str = "https://overpass-api.de/api/interpreter";
 
+// Optional local map data has its own attribution/license in assets/maps/README.md.
+const NEUSOFT_STADIUM_OSM: &[u8] = include_bytes!("../../assets/maps/dalian-neusoft-stadium.osm");
+
+/// Materialize the explicitly selected supplement for the existing manual-map loader.
+/// A content-addressed filename keeps updates separate from user-edited maps.
+pub fn install_neusoft_stadium_map() -> Result<std::path::PathBuf, String> {
+    install_neusoft_stadium_map_in(&cache_dir().join("bundled"))
+}
+
+fn install_neusoft_stadium_map_in(dir: &Path) -> Result<std::path::PathBuf, String> {
+    use std::io::Write;
+    std::fs::create_dir_all(dir).map_err(|e| format!("无法保存内置补充地图：{e}"))?;
+    let digest = format!("{:x}", Sha256::digest(NEUSOFT_STADIUM_OSM));
+    let path = dir.join(format!("dalian-neusoft-stadium-{digest}.osm"));
+    match std::fs::OpenOptions::new().write(true).create_new(true).open(&path) {
+        Ok(mut file) => file.write_all(NEUSOFT_STADIUM_OSM)
+            .map_err(|e| format!("无法写入内置补充地图：{e}"))?,
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            let bytes = std::fs::read(&path).map_err(|e| format!("无法读取内置补充地图：{e}"))?;
+            if bytes != NEUSOFT_STADIUM_OSM {
+                return Err(format!("内置补充地图文件已被修改，未覆盖；请另存或移走后重试：{}", path.display()));
+            }
+        }
+        Err(e) => return Err(format!("无法保存内置补充地图：{e}")),
+    }
+    Ok(path)
+}
+
 pub fn validate_fences(fences: &[Vec<(f64, f64)>]) -> Result<(), String> {
     if fences.is_empty() {
         return Err("当前学校没有有效围栏，无法保证校内路线；请先确认学校围栏".into());
@@ -424,6 +452,27 @@ mod tests {
             &net, &[route_planner::Coord::new(121.55, 38.91)], 1090.0,
         );
         assert!(!distant.issues.is_empty(), "the distance limit must still reject off-map points");
+    }
+
+    #[test]
+    fn bundled_map_install_is_repeatable_and_preserves_user_edits() {
+        let dir = std::env::temp_dir().join(format!("bundled-roads-{}", uuid::Uuid::new_v4()));
+        let path = install_neusoft_stadium_map_in(&dir).unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), NEUSOFT_STADIUM_OSM);
+        assert_eq!(install_neusoft_stadium_map_in(&dir).unwrap(), path);
+        std::fs::write(&path, b"user-edited map").unwrap();
+        assert!(install_neusoft_stadium_map_in(&dir).is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), b"user-edited map");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn bundled_map_install_reports_an_unwritable_destination() {
+        let file = std::env::temp_dir().join(format!("bundled-road-file-{}", uuid::Uuid::new_v4()));
+        std::fs::write(&file, b"not a directory").unwrap();
+        assert!(install_neusoft_stadium_map_in(&file).is_err());
+        assert_eq!(std::fs::read(&file).unwrap(), b"not a directory");
+        std::fs::remove_file(file).unwrap();
     }
 
     fn fixture() -> (Vec<Vec<(f64, f64)>>, Vec<u8>) {
