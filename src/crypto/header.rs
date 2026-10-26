@@ -67,10 +67,9 @@ impl HeaderIdentity {
         crate::location::Coordinate::new(self.anchor_lat, self.anchor_lon, 0.0)
     }
 
-    /// 旧版本首次启动会写入大连默认值。未明确配置前禁止将它作为异地跑步位置使用。
+    /// 拒绝空城市、无效锚点及旧版内置示例坐标；城市名本身不能判断是否已配置。
     pub fn has_unconfigured_default_location(&self) -> bool {
         self.city.trim().is_empty()
-            || self.city.trim() == crate::location::default_city()
             || self.anchor_coordinate().map(|c| c.is_default_dalian()).unwrap_or(true)
     }
 

@@ -201,7 +201,7 @@ impl App {
         if self.identity.has_unconfigured_default_location() {
             ui.colored_label(
                 theme::warn(),
-                "运行前请填写实际城市和定位锚点；默认大连配置不会用于提交",
+                "运行前请填写并保存实际城市和有效定位锚点；请勿沿用内置示例坐标",
             );
         }
         if page.saved_flash > 0.0 {
