@@ -404,6 +404,28 @@ pub fn load_for_route_cancellable(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bundled_neusoft_stadium_connects_all_five_checkpoints() {
+        let mut net = parse(include_bytes!("../../assets/maps/dalian-neusoft-stadium.osm")).unwrap();
+        crate::track::generate_road::align_network(&mut net);
+        let points = [
+            (38.900981, 121.540439),
+            (38.901118, 121.541769),
+            (38.901778, 121.541894),
+            (38.901792, 121.541005),
+            (38.901678, 121.540241),
+        ].map(|(lat, lon)| route_planner::Coord::new(lon, lat));
+        let check = route_planner::check::inspect(&net, &points, 1090.0);
+        assert!(check.issues.is_empty(), "{:?}", check.issues);
+        assert!((400.0..450.0).contains(&check.minimum_m.unwrap()));
+        assert!(net.boundaries.is_empty(), "a map supplement must not invent a school boundary");
+        let distant = route_planner::check::inspect(
+            &net, &[route_planner::Coord::new(121.55, 38.91)], 1090.0,
+        );
+        assert!(!distant.issues.is_empty(), "the distance limit must still reject off-map points");
+    }
+
     fn fixture() -> (Vec<Vec<(f64, f64)>>, Vec<u8>) {
         let fences = vec![vec![
             (39.899, 116.399),
