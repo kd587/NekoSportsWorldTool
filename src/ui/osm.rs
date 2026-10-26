@@ -125,6 +125,27 @@ impl App {
         );
         ui.label("手动导入支持 OSM XML（.osm/.xml），无需登录；PBF/JSON 请先转换为 OSM XML。路线预览另需登录刷新策略和点位。");
         ui.label("无学校围栏时也可沿道路闭环重复里程，但无法保证路线在校内；服务端仍按实际规则判定成绩。");
+        ui.separator();
+        ui.label("可选补充地图：大连东软信息学院软件园校区田径场");
+        ui.label("按公开影像补绘，非实地 GPS 测绘；仅在确认与当前田径场一致后加载。");
+        ui.hyperlink_to(
+            "补绘影像来源：Esri World Imagery",
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        );
+        if ui.add_enabled(
+            !self.osm_page.busy,
+            egui::Button::new("加载大连东软田径场补充地图"),
+        ).clicked() {
+            match crate::api::school_roads::install_neusoft_stadium_map() {
+                Ok(path) => {
+                    self.run_page.route_mode = crate::track::generate_road::RouteMode::Road;
+                    self.config.route_mode = "road".into();
+                    self.load_osm_async(path.display().to_string());
+                }
+                Err(error) => self.osm_page.status = error,
+            }
+        }
+        ui.separator();
         ui.horizontal_wrapped(|ui| {
             ui.label("手动 OSM 文件：");
             ui.add_sized(
