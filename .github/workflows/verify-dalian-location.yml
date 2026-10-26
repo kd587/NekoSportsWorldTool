@@ -1,0 +1,38 @@
+name: Verify Dalian location fix
+
+on:
+  push:
+    branches: [codex/verify-dalian-location]
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Run CLI library tests
+        run: cargo test --locked --no-default-features --lib
+
+  windows:
+    needs: regression
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run full GUI library tests
+        run: cargo test --release --locked --lib
+      - name: Build Windows GUI and CLI
+        run: cargo build --release --locked --bin nekosportsworldtool
+      - name: Verify CLI startup
+        run: ./target/release/nekosportsworldtool.exe --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NekoSportsWorldTool-Windows-x64-dalian-fix
+          path: target/release/nekosportsworldtool.exe
