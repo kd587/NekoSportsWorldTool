@@ -1,4 +1,4 @@
-name: Verify Dalian location fix
+name: Verify Dalian location and Neusoft stadium
 
 on:
   push:
@@ -34,5 +34,5 @@ jobs:
         run: ./target/release/nekosportsworldtool.exe --help
       - uses: actions/upload-artifact@v4
         with:
-          name: NekoSportsWorldTool-Windows-x64-dalian-fix
+          name: NekoSportsWorldTool-Windows-x64-neusoft-stadium
           path: target/release/nekosportsworldtool.exe
