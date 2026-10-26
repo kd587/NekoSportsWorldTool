@@ -141,7 +141,7 @@ pub fn run_full_flow_cancellable(
     // ② 实时点位（拒绝本地样本兜底）
     log("[points] 拉取实时点位…");
     if client.identity.has_unconfigured_default_location() {
-        return Err("请先在设备信息页填写本次跑步所在城市和定位锚点，不能使用大连默认配置".into());
+        return Err("请先在设备信息页填写并保存本次跑步所在城市和有效定位锚点，请勿沿用内置示例坐标".into());
     }
     let anchor: Coordinate = client.identity.anchor_coordinate()?;
     let area_id = (fences.area.run_area_id >= 0).then(|| fences.area.run_area_id.to_string());
