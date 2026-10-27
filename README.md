@@ -1,82 +1,103 @@
-<h1 style="font-size: 48px;">别倒卖了😭</h1>
+# NekoSportsWorldTool 大连东软田径场补充版
 
-# NekoSportsWorldTool
+基于 [YanamiNeko/NekoSportsWorldTool](https://github.com/YanamiNeko/NekoSportsWorldTool) 的**非官方二次开发版**，由 [kd587](https://github.com/kd587) 整理发布。原作者为 **YanamiNeko**。本版不是原作者官方发布，不代表原作者认可或背书。
 
-![Release](https://img.shields.io/github/v/release/YanamiNeko/NekoSportsWorldTool)
-![Build](https://github.com/YanamiNeko/NekoSportsWorldTool/actions/workflows/release.yml/badge.svg)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
+主要解决“大连市”定位误拦，以及大连东软信息学院软件园校区田径场公开路网缺少跑道的问题。此首页重点介绍配置、地图加载和路线预览；其他原项目功能见 [原项目说明](README.upstream.md)。
 
-运动世界校园版全协议自动化工具，纯 Rust 单文件，GUI / CLI 双模式。
+**仅限非商业使用和分享。禁止倒卖、收费代做、广告变现或商业集成。**保留原作者 [LICENSE](LICENSE)，代码及本修改版按 [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) 使用。
 
-> ⚠️ 仅供学习研究，请勿用于违反学校规定的场景，后果自负。
+## 下载
 
-## 功能
+第一次使用建议下载完整包，解压后阅读指南：
 
-- **跑步**：一键全链（策略 → 打卡点 → 轨迹 → 提交 → OBS → 验证），轨迹按打卡点自然生成，开始时间支持随机或指定到前 3 天
-- **AI 运动**：任务 / 自由练习双模式，批量补签（前 60 天 × 多项目）
-- **数据**：学期完成度、违规自查、排行榜（个人/班级/院系 × 日/月、室内榜、历史榜）、个人主页
-- **登录**：支持人机验证自动通过
-- **自动更新**：桌面端检查/下载/自替换并重启（GitHub Release 直连，无镜像）；Android 下载 APK 调起系统安装器；启动检查模式可选（静默/询问/关闭）
+| 文件 | 用途 |
+| --- | --- |
+| [Windows 完整使用包](https://github.com/kd587/NekoSportsWorldTool/releases/latest/download/NekoSportsWorldTool-Neusoft-Windows-x64.zip) | EXE、备用地图、Word 指南和许可说明 |
+| [单独下载新版 EXE](https://github.com/kd587/NekoSportsWorldTool/releases/latest/download/NekoSportsWorldTool-Windows-x64-neusoft-stadium.exe) | 已有配置时使用，地图已内嵌 |
+| [下载 Word 操作指南](https://github.com/kd587/NekoSportsWorldTool/releases/latest/download/Neusoft-Setup-Guide.docx) | 三页通俗配置说明，全文宋体小四 |
+| [全部发布文件](https://github.com/kd587/NekoSportsWorldTool/releases/latest) | 备用地图、校验值和发布说明 |
 
-## 界面
+本次提供 Windows x64 程序，未验证其他平台的运行结果。
 
-![GUI](docs/screenshot.png)
+## 第一次使用 按顺序配置
 
-## 技术特点
+### 1 打开新版
 
-- 完整实现 NetSecKit 信封加密与响应解密，每个响应强制 RSA 验签（fail-closed）
-- 人机验证全程本地完成，不依赖任何外部服务
-- 轨迹生成器：打卡点拟合环 + 自然速度曲线 + 哨兵点 / 断崖 / 点位吸附
-- 设备身份持久化（DeviceId / 安装时间 / MAC），稳定不易触发风控
-- GUI 与 CLI 共用同一套协议层，数据文件互通
+关闭旧版，解压完整包，双击 `NekoSportsWorldTool-Windows-x64-neusoft-stadium.exe`。
 
-## 使用
+原来已经使用过的同学，将新版放在原程序所在文件夹，保留自己的 `config.json`、`identity.json` 等配置。不要删除或分享这些文件；发布包不含任何人的账号、密码或会话。
 
-双击 exe 进入 GUI；CLI 用法：
+### 2 保存设备和实际位置
 
-```text
-NekoSportsWorldTool login --user <手机号> --pass <密码> --remember
-NekoSportsWorldTool run                                  # 一键跑步（--altitude 17.2 固定海拔，或 11.6-22.8 映射到区间）
-NekoSportsWorldTool ai --sport 2 --score 26000           # AI 运动
-NekoSportsWorldTool rank main --type 1 --sort 1          # 排行榜
-NekoSportsWorldTool update [--check]           # 自动更新（--check 仅检查不下载）
-NekoSportsWorldTool template --file run.gpx   # 本地分析真实记录海拔（不会上传）
-NekoSportsWorldTool help                                 # 全部命令
-```
+1. 打开“设备信息”，按实际设备选择 iOS 或 Android。
+2. 城市按实际填写，在大连可以直接填 **“大连市”**。
+3. 填写实际场地的定位锚点，**先纬度、后经度**。不同地图坐标可能不同，不确定时先核对，不要照搬示例位置。
+4. 点击 **“保存”**。只改输入框、不保存，程序仍可能使用上一次的值。
 
-`template` 只读取用户手动选择的本地 GPX/JSON 文件，输出采样点、海拔范围、累计上升和累计下降，
-不会登录、访问服务器或把模板记录接入跑步上传流程。
+已有设备信息正常时，不必反复随机生成设备。本版仍拒绝空城市、无效坐标和旧版示例坐标。
 
-手动海拔支持三种状态：留空使用自动海拔；填写单个数字（例如 `17.2`）让所有轨迹点使用固定海拔；填写区间（例如 `11.6-22.8`）将生成的海拔曲线映射到该上下限内，同时保留轨迹的相对起伏。
+### 3 登录自己的账号
 
-青龙定时任务：首次手工 `login --remember` 一次，之后定时挂 `run` 即可。
+在程序顶部输入自己的账号和密码，按提示登录，确认显示的是自己的姓名或账号。地图可先本地加载；刷新学校点位及查看完整预览需要正常登录。
+
+### 4 加载内置田径场地图
+
+**仅适用于大连东软信息学院软件园校区对应田径场，其他学校和校区不要直接套用。**
+
+1. 点击顶部 **“路网”**，核对补充地图是否对应实际场地。
+2. 点击 **“加载大连东软田径场补充地图”**。
+3. 等待“路网加载成功”，统计应为 **174 节点、350 条有向边、2 栋建筑**。
+4. 显示 **“当前：手动文件”** 是正常的，内置补图也使用这套加载流程。
+
+地图已包含在 EXE 中，选择后会保存到程序目录下的 `school_roads/bundled`，无需另行下载。
+
+### 5 刷新点位 核对预览
+
+1. 回到 **“跑步”** 页，选择 **“真实道路路由”**。
+2. 点击 **“刷新路线点位与围栏”**。
+3. 等待 **“道路预览已完成”**，核对地图、点位和实际田径场一致。
+4. 确认本次检查没有点位不可达报错。
+
+此前核对的这组 5 个点位，完整闭环最短约 **427 米**。这是补绘几何的计算长度，不是认证圈长；学校更新点位后，结果可能变化。
+
+**操作顺序：打开新版 → 保存设备和实际定位 → 登录 → 路网 → 加载田径场补充地图 → 跑步 → 真实道路路由 → 刷新点位 → 核对预览。**
+
+## 备用方法 手动导入地图
+
+完整包附有 `大连东软信息学院-田径场补全.osm`。
+
+进入“路网”，在“手动 OSM 文件”旁点击“浏览…”，选择该文件并点击“加载路网”。再回到“跑步”页刷新点位。手动导入后请保留文件；移动或删除后，需要重新选择路径。
 
 ## 常见问题
 
-### 大连市定位或大连东软田径场路网不可达
+| 情况 | 处理方法 |
+| --- | --- |
+| 找不到内置地图按钮 | 确认 EXE 文件名含 `neusoft-stadium`，旧版没有此按钮 |
+| 仍提示点位距道路超过 40 米 | 确认加载了 174 节点补图，再刷新点位；仍失败时核对校区和地图，不要删除点位或放大限制 |
+| 自动获取后又出现旧问题 | 自动获取会切回原公开地图，重新加载内置补图即可 |
+| 路线过期或登录失效 | 先重新登录（如需），再刷新路线点位 |
+| 显示多个道路连通分量 | 不一定是故障，关键是当前全部点位是否能在同一闭环规划 |
+| 未提供学校边界 | 接口没有返回有效围栏，不等于地图加载失败；本版没有虚构边界 |
+| 底部保留上一次失败文字 | 以本次刷新后的预览和检查结果为准；本次也失败时再排查 |
+| Windows 阻止运行 | 核对来源、记录完整提示，或等待原作者正式版本；不要为加载地图关闭系统安全保护 |
 
-城市可保持“大连市”，请填写并保存实际定位锚点。程序只拦截空城市、无效坐标和未修改的内置示例坐标，不会仅按“大连市”这个城市名拒绝配置。
+请从**本仓库 Releases**更新这个修改版。软件内更新检查仍使用原项目的仓库配置，下载到的版本未必包含本补图入口。
 
-大连东软信息学院软件园校区田径场的公开路网缺少跑道时，可在“路网”页核对位置后，点击“加载大连东软田径场补充地图”，再刷新点位、核对道路预览。此地图随程序内置，采用手动地图流程，不自动用于其他学校。补绘为影像估算，非实地 GPS 测绘；来源、适用范围和数据许可见 [补充地图说明](assets/maps/README.md)。
+## 修改说明与许可
 
-- **提示未登录 / 401**：先执行 `login --remember`（GUI 勾选记住密码等价），会话失效会自动重登
-- **10121 设备风险**：设备身份是持久化的，删除 `identity.json` 等于换了新设备，不要频繁删
-- **10603 点位限流**：点位接口 5 分钟限 3 次，程序内置 300s 缓存，正常使用不会触发
-- **榜单为空**：当天还没有人产生有效里程，查询会自动回退最近 3 天
-- **检查更新失败**：更新仅直连 GitHub，网络不通时到 [Release](https://github.com/YanamiNeko/NekoSportsWorldTool/releases) 手动下载
-- **手动更新方式**：Windows 下载新的 `nekosportsworldtool.exe` 后退出软件，用新文件替换旧文件；请保留 `config.json`、`identity.json`、`points_cache.json` 等配置文件，不要删除或修改。
-- **人机验证失败**：自动重试 3 轮，仍失败大概率是网络波动，稍后再试
-- **杀软误报**：未签名编译产物可能被误报，自行判断后加白
+本版修改：允许“大连市”配合实际有效锚点使用；加入需要主动选择的内置田径场补图；复用原手动地图加载与保存流程，并增加测试。没有放宽 40 米检查、虚构学校边界或修改学校点位。界面可能仍显示基础版本号 `0.3.0`，请用 EXE 文件名和新增地图按钮识别。
 
-## 构建
+- **原作者：YanamiNeko**。[原项目](https://github.com/YanamiNeko/NekoSportsWorldTool)、[原 LICENSE](LICENSE)、[原项目说明](README.upstream.md)。
+- **二次开发整理：kd587**。非官方修改发布；分享时保留原作者和原项目链接、许可证及修改说明，不得冒充原作者或暗示其背书。
+- **代码及修改版：CC BY-NC 4.0**。禁止出售、收费代做、广告变现或商业集成。商业用途需另行取得相关权利人的许可。
+- **地图数据单独许可：ODbL 1.0**。© OpenStreetMap contributors；跑道按 Esri World Imagery 及其影像贡献者提供的可见场地补绘。详细来源、署名和许可见 [地图说明](assets/maps/README.md)。不分发影像瓦片。
+- 补图为影像估算，未经实地 GPS 测绘，场地现状需核对。预览通过不代表学校或服务端一定认可结果，请按学校规则使用。
 
-```bash
-cargo build --release                        # GUI + CLI
-cargo build --release --no-default-features  # 仅 CLI
-```
+## 源码和验证
 
-推 tag 自动构建 Windows / macOS / Linux 四平台产物并发布 Release（见 `.github/workflows/release.yml`）。
+- 上游修复提交：[PR #132](https://github.com/YanamiNeko/NekoSportsWorldTool/pull/132)，状态以上游页面为准。
+- EXE 功能源码提交：[`0657518`](https://github.com/kd587/NekoSportsWorldTool/commit/065751869cd9d77205da0252bc853f4a9af2fcb4)。本发布分支另增加说明和指南，未改变该构建的功能源码。
+- [GitHub Actions 构建](https://github.com/kd587/NekoSportsWorldTool/actions/runs/40283917834)：Windows 完整库测试 **190 项**、CLI 库测试 **128 项**通过；发布构建和启动检查通过。
+- 发布页的 `SHA256SUMS.txt` 可校验下载文件。发布包不含个人账号、密码、设备配置、会话或运动记录。
 
-## 许可证
-
-[CC BY-NC 4.0](LICENSE) © YanamiNeko（禁止商用）
+详细步骤：[Word 操作指南](guides/Neusoft-Setup-Guide.docx)。
